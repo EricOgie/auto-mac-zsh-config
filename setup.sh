@@ -56,6 +56,7 @@ execute_command() {
 
     # Execute the command and capture any output or error message
     output=$($cmd 2>&1) || handle_error "Command failed: $cmd : Msg: $output"
+    echo "$output"
 }
 
 can_sudo() {
