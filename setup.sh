@@ -23,12 +23,15 @@ MIN_RUBY_VERSION="3.1.0"
 CURRENT_RUBY_VERSION=$(ruby -v | awk '{print $2}' | sed 's/[a-zA-Z].*//')
 
 DEFAULT_ZSHRC="$HOME/.zshrc"
-# ~/.zshrc file backup file
-BACKUP_ZSHRC="$HOME/.zshrc.bak_$(date +%Y%m%d_%H%M%S)"
+# ~/.zshrc file backup location
+BACKUP_DIR="$HOME/AMZC-backups"
+BACKUP_ZSHRC="$BACKUP_DIR/.zshrc.bak_$(date +%Y%m%d_%H%M%S)"
 
 # Login User and User home
 USER=${USER:-$(id -u -n)}
 HOME="${HOME:-$(eval echo ~$USER)}"
+PLUGINS_DIR=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/
+
 
 command_exists(){
     # Check if a command is available on the system.
@@ -75,8 +78,17 @@ can_sudo() {
     sudo -v >/dev/null 2>&1
 }
 
+print_section_header() {
+    echo
+    echo "***********************************************"
+    echo "${2:-Installing} $1"
+    echo "***********************************************"
+    echo
+}
+
 
 install_prerequisites() {
+    print_section_header "Preliminary Checks and Configurations" "Running"
     # Check if Homebrew is installed - Install if not
     if ! command_exists brew; then
         echo "Homebrew now found. Installing Homebrew..."
@@ -98,17 +110,20 @@ install_prerequisites() {
     fi
 
     # Backup ~/.zshrc file for rollback purposes
-    if [ -f "$HOME/.zshrc"]; then
-        echo "Saving the default $HOME/.zshrc file content to $BACKUP_ZSHRC..."
-        cp $DEFAULT_ZSHRC $BACKUP_ZSHRC
+    if [ -f "$HOME/.zshrc" ]; then
+        echo "Saving the default $HOME/.zshrc file content to $BACKUP_ZSHRC"
+        mkdir -p $BACKUP_DIR && cp $DEFAULT_ZSHRC $BACKUP_ZSHRC
         echo "$HOME/.zshrc Backed up at $BACKUP_ZSHRC."
     else
-        echo "No existing .zshrc found - No backup needed"
+        echo "No existing .zshrc file found - No backup needed"
     fi
 
 }
 
 install_themes_and_fonts() {
+
+    print_section_header "Themes and Fonts"
+
     # Install Powerlevel10k theme
     if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
         echo "Installing Powerlevel10k theme..."
@@ -118,11 +133,17 @@ install_themes_and_fonts() {
         sed -i '' 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
     else
         echo "Powerlevel10k theme already installed."
+        echo "Moving on to other installations..."
+        echo
     fi
 
     # Install and configure Nerd Fonts
-    echo "Installing Nerd Fonts..."
-    execute_command brew install --cask font-hack-nerd-font
+    if [ ! -f "$HOME/Library/Fonts/HackNerdFont-Regular.ttf" ]; then
+        echo "Installing Hack Nerd Font..."
+        execute_command env HOMEBREW_NO_AUTO_UPDATE=1 brew install --cask font-hack-nerd-font
+    else
+        echo "Hack Nerd Font already installed"
+    fi
 
     # Update iTerm2 preferences to use Hack Nerd Font
     echo "Configuring Iterm2 to use Hack Nerd Font for Non Ascii Font"
@@ -136,14 +157,27 @@ install_themes_and_fonts() {
 
 
 install_plugins() {
+    print_section_header "Plugins"
     # Install zsh plugins
     # - Install zsh-syntax-highlighting
-    echo "Installing zsh-syntax-highlighting..."
-    execute_command git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-
-    # - Install zsh-autosuggestions
-    echo "Installing zsh-autosuggestions..."
-    execute_command git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    if [ ! -d "$PLUGINS_DIR/zsh-syntax-highlighting" ]; then
+        echo "Installing zsh-syntax-highlighting..."
+        execute_command git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    else
+        echo "zsh-syntax-highlighting is already installed"
+        echo "Moving on to other installations..."
+        echo
+    fi
+    
+    if [ ! -d "$PLUGINS_DIR/zsh-autosuggestions" ]; then
+        # - Install zsh-autosuggestions
+        echo
+        echo "Installing zsh-autosuggestions..."
+        execute_command git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    else
+        echo "zsh-autosuggestions is already installed"
+        echo
+    fi
 
     # Add plugins to .zshrc
     sed -i '' 's/^plugins=(.*)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/' ~/.zshrc
@@ -151,6 +185,7 @@ install_plugins() {
 }
 
 install_colorls() {
+    print_section_header "colorls"
     if ! command_exists colorls; then
         # Check if CURRENT_RUBY_VERSION meets min requirment of 3.1.0. Install and use a higher version if not
         if ! printf '%s\n%s\n' "$MIN_RUBY_VERSION" "$CURRENT_RUBY_VERSION" | sort -V | head -n 1 | grep -q "^$CURRENT_RUBY_VERSION$"; then
@@ -175,20 +210,20 @@ install_colorls() {
         execute_command sudo gem install colorls
     fi
 
-    # Prompt user to add alias ls=colorls
-    read -p "Would you like to set up 'ls' alias to use colorls? (y/n): " setup_alias
+    
+    if ! (grep -q "alias ls=colorls" ~/.zshrc || grep -q "alias ls='colorls'" ~/.zshrc); then
+        # Prompt user to add alias ls=colorls
+        read -p "Would you like to set up 'ls' alias to use colorls? (y/n): " setup_alias
 
-    if [[ $setup_alias == "y" || $setup_alias == "Y" ]]; then
-        # Add alias to .zshrc if not already present
-        if ! (grep -q "alias ls=colorls" ~/.zshrc || grep -q "alias ls='colorls'" ~/.zshrc); then
+        # Check user's response and respond accordingly
+         if [[ $setup_alias == "y" || $setup_alias == "Y" ]]; then
             echo "Adding alias 'ls=colorls' to ~/.zshrc..."
             echo "alias ls=colorls" >> ~/.zshrc
-        else
-            echo "Alias 'ls=colorls' already present in ~/.zshrc."
-        fi
-    else
-        echo "Skipping alias setup..."
-    fi 
+         else
+            echo "Skipping alias setup..."
+         fi
+    fi
+
 }
 
 
@@ -199,9 +234,10 @@ main() {
     install_prerequisites
 
     # Install Oh-my-zsh
+    print_section_header "oh-my-zsh"
     if [ ! -d "$HOME/.oh-my-zsh" ]; then 
         echo "Installing oh-my-zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     else
         echo "Oh-My-Zsh is already installed."
     fi
@@ -212,8 +248,6 @@ main() {
 
     install_colorls
     
-    # Reload .zshrc
-    source ~/.zshrc
     echo "Installation complete! Please restart iTerm2."
 
     # Inform user about default ~/.zshrc backup and provide instruction on how to rollback
