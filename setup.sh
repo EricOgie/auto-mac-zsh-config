@@ -256,9 +256,6 @@ main() {
   
 }
 
+main "$@"
 
-# Execute main() if the script is run directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
 
