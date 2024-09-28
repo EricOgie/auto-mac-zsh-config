@@ -13,4 +13,4 @@ This script automates the setup of a highly functional and visually appealing Zs
 
 ### Run via `curl`
 ```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/main/setup.sh"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/main/setup.sh)"
