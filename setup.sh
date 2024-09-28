@@ -205,27 +205,34 @@ install_colorls() {
     if ! command_exists colorls; then
         # Check if CURRENT_RUBY_VERSION meets min requirment of 3.1.0. Install and use a higher version if not
         if [[ "$LOWER_VERSION" != "$MIN_RUBY_VERSION" ]]; then
+
             echo "Your current Ruby version, $CURRENT_RUBY_VERSION is below the minimum required version, $MIN_RUBY_VERSION."
             echo "Installing a compartible version.."
             echo 
 
-            execute_command brew install rbenv
-            execute_command brew install ruby-build
+            if ! command_exists rbenv ; then
+                execute_command brew install rbenv
+                execute_command brew install ruby-build
 
-            echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' >> ~/.zshrc
-            source ~/.zshrc
-
+                echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' >> ~/.zshrc
+                source ~/.zshrc
+            fi
+            
             execute_command rbenv install 3.1.0
             execute_command rbenv global 3.1.0
-
-            echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' >> ~/.zshrc
-            source ~/.zshrc
-
             execute_command rbenv rehash
+
+            RBENV_GEM=$(rbenv which gem)
+
+            execute_command sudo "$RBENV_GEM" install colorls
+
+        else
+
+            # Install colorls using gem with system installed ruby
+            execute_command sudo gem install colorls
         fi
 
-        # Install colorls using gem
-        execute_command sudo gem install colorls
+        
     fi
 
     
