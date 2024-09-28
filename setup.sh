@@ -229,8 +229,9 @@ install_colorls() {
             
 
             echo "Install colorls using gem"
-            RBENV_GEM=$(rbenv which gem)
-            execute_command sudo "$RBENV_GEM" install colorls
+            # RBENV_GEM=$(rbenv which gem)
+            # execute_command sudo "$RBENV_GEM" install colorls
+            execute_command rbenv exec gem install colorls
 
         else
 
