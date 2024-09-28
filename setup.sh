@@ -1,13 +1,13 @@
 #! /bin/bash
 #
 # This script should be run using curl:
-# sh -c "$(curl -fsSL https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/master/setup.sh)"
+# sh -c "$(curl -fsSL https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/main/setup.sh)"
 
 # or using wget:
-# sh -c "$(wget -qO- https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/master/setup.sh)"
+# sh -c "$(wget -qO- https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/main/setup.sh)"
 
 # or using fetch:
-# sh -c "$(fetch -o - https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/master/setup.sh)"
+# sh -c "$(fetch -o - https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/main/setup.sh)"
 
 # For a more personalised usage, you can download the setup.sh script, tweak to your taste and run afterward.
 #
@@ -21,6 +21,9 @@ MIN_RUBY_VERSION="3.1.0"
 # A simple ruby -v | awk '{print $2}' can output x.x.xpx instead of x.x.x
 # so we remove any unwanted [a-zA-Z] from the version output using sed
 CURRENT_RUBY_VERSION=$(ruby -v | awk '{print $2}' | sed 's/[a-zA-Z].*//')
+
+# Compute the lower version between CURRENT_RUBY_VERSION and MIN_RUBY_VERSION
+LOWER_VERSION=$(printf '%s\n%s\n' "$CURRENT_RUBY_VERSION" "$MIN_RUBY_VERSION" | sort -V | head -n 1)
 
 DEFAULT_ZSHRC="$HOME/.zshrc"
 # ~/.zshrc file backup location
@@ -120,6 +123,19 @@ install_prerequisites() {
 
 }
 
+
+install_oh-my-zsh() {
+     # Install Oh-my-zsh
+    print_section_header "oh-my-zsh"
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then 
+        echo "Installing oh-my-zsh..."
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    else
+        echo "Oh-My-Zsh is already installed."
+    fi
+}
+
+
 install_themes_and_fonts() {
 
     print_section_header "Themes and Fonts"
@@ -188,8 +204,10 @@ install_colorls() {
     print_section_header "colorls"
     if ! command_exists colorls; then
         # Check if CURRENT_RUBY_VERSION meets min requirment of 3.1.0. Install and use a higher version if not
-        if ! printf '%s\n%s\n' "$MIN_RUBY_VERSION" "$CURRENT_RUBY_VERSION" | sort -V | head -n 1 | grep -q "^$CURRENT_RUBY_VERSION$"; then
-            echo "Your current Ruby version, $CURRENT_RUBY_VERSION is below the minimum required version, $MIN_RUBY_VERSION.\n Installing a compartible version.."
+        if [[ "$LOWER_VERSION" != "$MIN_RUBY_VERSION" ]]; then
+            echo "Your current Ruby version, $CURRENT_RUBY_VERSION is below the minimum required version, $MIN_RUBY_VERSION."
+            echo "Installing a compartible version.."
+            echo 
 
             execute_command brew install rbenv
             execute_command brew install ruby-build
@@ -233,14 +251,7 @@ main() {
 
     install_prerequisites
 
-    # Install Oh-my-zsh
-    print_section_header "oh-my-zsh"
-    if [ ! -d "$HOME/.oh-my-zsh" ]; then 
-        echo "Installing oh-my-zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    else
-        echo "Oh-My-Zsh is already installed."
-    fi
+    install_oh-my-zsh
 
     install_themes_and_fonts
 
@@ -256,6 +267,5 @@ main() {
   
 }
 
+
 main "$@"
-
-
