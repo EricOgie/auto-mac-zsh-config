@@ -124,7 +124,7 @@ install_prerequisites() {
 }
 
 
-install_oh-my-zsh() {
+install_oh_my_zsh() {
      # Install Oh-my-zsh
     print_section_header "oh-my-zsh"
     if [ ! -d "$HOME/.oh-my-zsh" ]; then 
@@ -251,7 +251,7 @@ main() {
 
     install_prerequisites
 
-    install_oh-my-zsh
+    install_oh_my_zsh
 
     install_themes_and_fonts
 
