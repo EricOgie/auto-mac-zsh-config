@@ -218,11 +218,15 @@ install_colorls() {
                 source ~/.zshrc
             fi
             
-            echo "Installing ruby 3.1.0 using rbenv"
-            echo
-            execute_command rbenv install 3.1.0
-            execute_command rbenv global 3.1.0
-            execute_command rbenv rehash
+            if ! rbenv versions | grep -q "3.1.0"; then
+                echo "Installing ruby 3.1.0 using rbenv"
+                echo
+                execute_command rbenv install 3.1.0
+                execute_command rbenv global 3.1.0
+                execute_command rbenv rehash
+            
+            fi
+            
 
             echo "Install colorls using gem"
             RBENV_GEM=$(rbenv which gem)
