@@ -9,7 +9,7 @@
 # or using fetch:
 # sh -c "$(fetch -o - https://raw.githubusercontent.com/EricOgie/auto-mac-zsh-config/main/setup.sh)"
 
-# For a more personalised usage, you can download the setup.sh script, tweak to your taste and run afterward.
+# For a more personalised usage, you can download the setup.sh script, tweak  and run afterward.
 #
 set -e
 
@@ -19,13 +19,14 @@ MIN_RUBY_VERSION="3.1.0"
 
 # Get current Ruby version.
 # A simple ruby -v | awk '{print $2}' can output x.x.xpx instead of x.x.x
-# so we remove any unwanted [a-zA-Z] from the version output using sed
+# Remove any unwanted [a-zA-Z] from the version output using sed
 CURRENT_RUBY_VERSION=$(ruby -v | awk '{print $2}' | sed 's/[a-zA-Z].*//')
 
 # Compute the lower version between CURRENT_RUBY_VERSION and MIN_RUBY_VERSION
 LOWER_VERSION=$(printf '%s\n%s\n' "$CURRENT_RUBY_VERSION" "$MIN_RUBY_VERSION" | sort -V | head -n 1)
 
 DEFAULT_ZSHRC="$HOME/.zshrc"
+
 # ~/.zshrc file backup location
 BACKUP_DIR="$HOME/AMZC-backups"
 BACKUP_ZSHRC="$BACKUP_DIR/.zshrc.bak_$(date +%Y%m%d_%H%M%S)"
@@ -94,7 +95,7 @@ install_prerequisites() {
     print_section_header "Preliminary Checks and Configurations" "Running"
     # Check if Homebrew is installed - Install if not
     if ! command_exists brew; then
-        echo "Homebrew now found. Installing Homebrew..."
+        echo "Homebrew not found. Installing Homebrew..."
         execute_command /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         # Run update
         execute_command brew update
@@ -145,7 +146,7 @@ install_themes_and_fonts() {
         echo "Installing Powerlevel10k theme..."
         execute_command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
         
-        # Set the theme to Powerlevel10k in .zshrc
+        # Set the theme to Powerlevel10k in ~/.zshrc file
         sed -i '' 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
     else
         echo "Powerlevel10k theme already installed."
