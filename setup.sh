@@ -203,43 +203,43 @@ install_plugins() {
 install_colorls() {
     print_section_header "colorls"
     if ! command_exists colorls; then
-        # Check if CURRENT_RUBY_VERSION meets min requirment of 3.1.0. Install and use a higher version if not
+
+        # Check if CURRENT_RUBY_VERSION meets the min requirment of 3.1.0. If not, Install a compartible version using rbenv.
+        # Note: CURRENT_RUBY_VERSION here is system installed ruby version.
         if [[ "$LOWER_VERSION" != "$MIN_RUBY_VERSION" ]]; then
 
             echo "Your current Ruby version, $CURRENT_RUBY_VERSION is below the minimum required version, $MIN_RUBY_VERSION."
-            echo "Installing a compartible version..."
+            echo "Installing a compartible Ruby version..."
             echo 
 
             if ! command_exists rbenv ; then
                 execute_command brew install rbenv
                 execute_command brew install ruby-build
-
-                echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' >> ~/.zshrc
-                source ~/.zshrc
             fi
-            
+
+
             if ! rbenv versions | grep -q "3.1.0"; then
                 echo "Installing ruby 3.1.0 using rbenv"
                 echo
                 execute_command rbenv install 3.1.0
                 execute_command rbenv global 3.1.0
                 execute_command rbenv rehash
-            
             fi
-            
 
-            echo "Install colorls using gem"
-            # RBENV_GEM=$(rbenv which gem)
-            # execute_command sudo "$RBENV_GEM" install colorls
-            execute_command rbenv exec gem install colorls
-
-        else
-
-            # Install colorls using gem with system installed ruby
-            execute_command sudo gem install colorls
         fi
 
-        
+        # If rbenv is used to install a compartible ruby (as seen above), we may have a situation where two ruby versions exist in parallel -
+        # System installed ruby and rbenv managed ruby. 
+        # When Ruby gems are installed, bash will naturally default to the system installed Ruby (whose version may be < min req) 
+        # To ensure rbenv Ruby is use for gem installations, we init rbenv in the running bash session
+        echo "Initialized rbenv in current bash session..."
+        if command_exists rbenv; then
+            eval "$(rbenv init - bash)"
+        fi
+
+        # Install colorls
+        execute_command sudo gem install colorls
+   
     fi
 
     
