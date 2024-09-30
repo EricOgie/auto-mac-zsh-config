@@ -90,6 +90,12 @@ print_section_header() {
     echo
 }
 
+print_finish_feedback () {
+    echo 
+    echo "****** Successfully installed $1 ******"
+    echo
+}
+
 
 install_prerequisites() {
     print_section_header "Preliminary Checks and Configurations" "Running"
@@ -99,18 +105,24 @@ install_prerequisites() {
         execute_command /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         # Run update
         execute_command brew update
+
+        print_finish_feedback  Homebrew
+
     fi
 
     # Check if zsh is installed - Install if not
     if ! command_exists zsh; then
         echo "Zsh shell not found.  Installing..."
         execute_command brew install zsh
+        print_finish_feedback  "zsh shell"
     fi
 
     # Setup Zsh as default shell if not set
     if [[ "$SHELL" != *"zsh" ]]; then
         echo "Default login shell is not zsh. Configuring zsh as default shell for $USER..."
         execute_command chsh -s $(which zsh)
+        echo "zsh shell now default login shell for $USER"
+        echo
     fi
 
     # Backup ~/.zshrc file for rollback purposes
@@ -118,6 +130,7 @@ install_prerequisites() {
         echo "Saving the default $HOME/.zshrc file content to $BACKUP_ZSHRC"
         mkdir -p $BACKUP_DIR && cp $DEFAULT_ZSHRC $BACKUP_ZSHRC
         echo "$HOME/.zshrc Backed up at $BACKUP_ZSHRC."
+        echo
     else
         echo "No existing .zshrc file found - No backup needed"
     fi
@@ -131,6 +144,7 @@ install_oh_my_zsh() {
     if [ ! -d "$HOME/.oh-my-zsh" ]; then 
         echo "Installing oh-my-zsh..."
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        print_finish_feedback  oh-my-zsh
     else
         echo "Oh-My-Zsh is already installed."
     fi
@@ -148,6 +162,9 @@ install_themes_and_fonts() {
         
         # Set the theme to Powerlevel10k in ~/.zshrc file
         sed -i '' 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
+
+        print_finish_feedback  "Powerlevel10k theme"
+
     else
         echo "Powerlevel10k theme already installed."
         echo "Moving on to other installations..."
@@ -158,6 +175,7 @@ install_themes_and_fonts() {
     if [ ! -f "$HOME/Library/Fonts/HackNerdFont-Regular.ttf" ]; then
         echo "Installing Hack Nerd Font..."
         execute_command env HOMEBREW_NO_AUTO_UPDATE=1 brew install --cask font-hack-nerd-font
+        print_finish_feedback  "Hack Nerd Font"
     else
         echo "Hack Nerd Font already installed"
     fi
@@ -180,6 +198,7 @@ install_plugins() {
     if [ ! -d "$PLUGINS_DIR/zsh-syntax-highlighting" ]; then
         echo "Installing zsh-syntax-highlighting..."
         execute_command git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+        print_finish_feedback  "zsh-syntax-highlighting"
     else
         echo "zsh-syntax-highlighting is already installed"
         echo "Moving on to other installations..."
@@ -191,6 +210,7 @@ install_plugins() {
         echo
         echo "Installing zsh-autosuggestions..."
         execute_command git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+        print_finish_feedback  "zsh-autosuggestions"
     else
         echo "zsh-autosuggestions is already installed"
         echo
@@ -216,6 +236,7 @@ install_colorls() {
             if ! command_exists rbenv ; then
                 execute_command brew install rbenv
                 execute_command brew install ruby-build
+                print_finish_feedback  "rbenv"
             fi
 
 
@@ -225,9 +246,15 @@ install_colorls() {
                 execute_command rbenv install 3.1.0
                 execute_command rbenv global 3.1.0
                 execute_command rbenv rehash
+
+                print_finish_feedback  "ruby@v3.1.0"
             fi
 
         fi
+
+        # Ensure rbenv initialized in each terminal session 
+        echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' >> ~/.zshrc
+        source ~/.zshrc
 
         # If rbenv is used to install a compartible ruby (as seen above), we may have a situation where two ruby versions exist in parallel -
         # System installed ruby and rbenv managed ruby. 
@@ -240,6 +267,7 @@ install_colorls() {
 
         # Install colorls
         execute_command sudo gem install colorls
+        print_finish_feedback  "colorls"
    
     fi
 
@@ -274,11 +302,9 @@ main() {
 
     install_colorls
     
-    echo "Installation complete! Please restart iTerm2."
-
-    # Inform user about default ~/.zshrc backup and provide instruction on how to rollback
-    echo "A backup of your original $HOME/.zshrc file has been created at $BACKUP_ZSHRC."
-    echo "You can restore it by running: cp $BACKUP_ZSHRC ~/.zshrc"
+    echo "Installation complete - You are all set!"
+    echo 
+    echo "Restart your terminal and follow configuration wizard to customize your terminal looks"
   
 }
 
